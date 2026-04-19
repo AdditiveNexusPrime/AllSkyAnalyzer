@@ -54,3 +54,13 @@ output:
   save_json: true
   save_db: false
   db_path: /data/output/results.db
+
+watchdog:
+  # How often (seconds) the watchdog checks for new images.
+  check_interval_seconds: 120
+  # If no image is newer than this many seconds, declare the camera stale.
+  stale_threshold_seconds: 300
+  # systemd service name to restart via SSH.
+  service_name: indi-allsky
+  # Directory for encrypted SSH credentials and Fernet key.
+  data_dir: /data/settings

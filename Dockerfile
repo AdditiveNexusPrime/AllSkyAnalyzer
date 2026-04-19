@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxrender1 \
         libxext6 \
         libgomp1 \
+        # SSH client (paramiko uses system libssl)
+        libssl3 \
         # astrometry.net CLI tool + default index files (optional but recommended)
         astrometry.net \
         astrometry-data-tycho2 \
@@ -79,9 +81,9 @@ COPY . .
 # Allow the config path to be overridden at runtime.
 ENV ALLSKY_CONFIG=/app/config/config.yaml
 
-# Output directory (can be volume-mounted).
-RUN mkdir -p /data/output
-VOLUME ["/var/lib/indi-allsky", "/data/output"]
+# Output + settings directories (can be volume-mounted).
+RUN mkdir -p /data/output /data/settings
+VOLUME ["/var/lib/indi-allsky", "/data/output", "/data/settings"]
 
 EXPOSE 8000
 

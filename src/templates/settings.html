@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% set watchdog_healthy = true %}
+
+{% block title %}Settings – AllSkyAnalyzer{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-blue-300">Settings</h1>
+  <p class="text-gray-400 text-sm mt-1">Configure allsky data paths, SSH credentials, and analysis parameters.</p>
+</div>
+
+{% if saved %}
+<div class="mb-4 px-4 py-3 rounded-lg bg-green-900 border border-green-700 text-green-300 text-sm flex items-center gap-2">
+  ✅ Settings saved successfully.
+</div>
+{% endif %}
+
+<form method="post" action="/settings" class="space-y-8">
+
+  <!-- ── Allsky data path ─────────────────────────────────────────── -->
+  <section class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold text-gray-200 mb-4">Allsky Image Source</h2>
+
+    <div class="grid grid-cols-1 gap-4">
+      <label class="block">
+        <span class="text-sm text-gray-400">Image directory (local path or mounted volume)</span>
+        <input type="text" name="allsky_image_dir"
+               value="{{ settings.allsky_image_dir }}"
+               placeholder="/var/lib/indi-allsky/images"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+        <span class="text-xs text-gray-500 mt-1 block">
+          Directory where indi-allsky writes captured JPEG/PNG images.
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ── SSH / camera watchdog ────────────────────────────────────── -->
+  <section class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold text-gray-200 mb-1">indi-allsky SSH Credentials</h2>
+    <p class="text-xs text-gray-500 mb-4">
+      Used by the camera watchdog to restart indi-allsky when the camera stops responding.
+      The password is stored <strong class="text-gray-400">encrypted at rest</strong> (AES-128 via Fernet).
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="block">
+        <span class="text-sm text-gray-400">Hostname / IP</span>
+        <input type="text" name="ssh_host"
+               value="{{ settings.ssh.host }}"
+               placeholder="192.168.1.100"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+      </label>
+
+      <label class="block">
+        <span class="text-sm text-gray-400">Port</span>
+        <input type="number" name="ssh_port"
+               value="{{ settings.ssh.port }}"
+               min="1" max="65535"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+      </label>
+
+      <label class="block">
+        <span class="text-sm text-gray-400">Username</span>
+        <input type="text" name="ssh_username"
+               value="{{ settings.ssh.username }}"
+               placeholder="pi"
+               autocomplete="username"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+      </label>
+
+      <label class="block">
+        <span class="text-sm text-gray-400">Password
+          <span class="text-gray-600 font-normal ml-1">(leave blank to keep existing)</span>
+        </span>
+        <input type="password" name="ssh_password"
+               placeholder="••••••••"
+               autocomplete="current-password"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+        {% if settings.ssh.password %}
+        <span class="text-xs text-green-600 mt-1 block">🔒 Password is currently set.</span>
+        {% else %}
+        <span class="text-xs text-gray-600 mt-1 block">No password stored yet.</span>
+        {% endif %}
+      </label>
+    </div>
+  </section>
+
+  <!-- ── Watchdog timing ──────────────────────────────────────────── -->
+  <section class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold text-gray-200 mb-4">Watchdog Timing</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="block">
+        <span class="text-sm text-gray-400">Check interval (seconds)</span>
+        <input type="number" name="check_interval_seconds"
+               value="{{ cfg.watchdog.check_interval_seconds }}"
+               min="30" max="3600"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+        <span class="text-xs text-gray-500 mt-1 block">How often the watchdog polls the image directory.</span>
+      </label>
+
+      <label class="block">
+        <span class="text-sm text-gray-400">Stale threshold (seconds)</span>
+        <input type="number" name="stale_threshold_seconds"
+               value="{{ cfg.watchdog.stale_threshold_seconds }}"
+               min="60" max="7200"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+        <span class="text-xs text-gray-500 mt-1 block">
+          If no image is newer than this many seconds, the camera is declared stale.
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ── Analysis parameters ──────────────────────────────────────── -->
+  <section class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold text-gray-200 mb-4">Analysis Parameters</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="block">
+        <span class="text-sm text-gray-400">Anomaly z-score threshold</span>
+        <input type="number" name="z_score_threshold"
+               value="{{ cfg.anomaly.z_score_threshold }}"
+               step="0.5" min="1" max="20"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+        <span class="text-xs text-gray-500 mt-1 block">Lower = more detections; higher = fewer false positives.</span>
+      </label>
+
+      <label class="block">
+        <span class="text-sm text-gray-400">Catalogue magnitude limit</span>
+        <input type="number" name="magnitude_limit"
+               value="{{ cfg.astrometry.magnitude_limit }}"
+               step="0.5" min="1" max="10"
+               class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100
+                      focus:outline-none focus:border-blue-500" />
+        <span class="text-xs text-gray-500 mt-1 block">Stars fainter than this magnitude are not labelled.</span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ── Submit ───────────────────────────────────────────────────── -->
+  <div class="flex gap-3">
+    <button type="submit"
+            class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded
+                   focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+      Save settings
+    </button>
+    <a href="/"
+       class="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-semibold rounded transition">
+      Cancel
+    </a>
+  </div>
+
+</form>
+{% endblock %}

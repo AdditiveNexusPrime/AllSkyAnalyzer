@@ -95,6 +95,21 @@ class OutputConfig:
     db_path: str = "output/results.db"
 
 
+@dataclass
+class WatchdogConfig:
+    """Settings for the camera health watchdog."""
+
+    # How often (seconds) to check whether new images are appearing.
+    check_interval_seconds: int = 120
+    # If no image is newer than this many seconds, declare the camera unhealthy.
+    stale_threshold_seconds: int = 300
+    # systemd service name to restart on the indi-allsky host.
+    service_name: str = "indi-allsky"
+    # Directory for the encrypted settings file and Fernet key.
+    # Overridable so tests can use a tmp directory.
+    data_dir: str = "/data/settings"
+
+
 # ---------------------------------------------------------------------------
 # Top-level config
 # ---------------------------------------------------------------------------
@@ -109,6 +124,7 @@ class Config:
     anomaly: AnomalyConfig = field(default_factory=AnomalyConfig)
     overlay: OverlayConfig = field(default_factory=OverlayConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
+    watchdog: WatchdogConfig = field(default_factory=WatchdogConfig)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "Config":

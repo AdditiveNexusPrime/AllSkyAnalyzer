@@ -23,9 +23,16 @@ PyYAML==6.0.2
 SQLAlchemy==2.0.36
 redis==5.0.8
 
-# Web API (optional REST interface)
+# Web API + frontend
 fastapi==0.115.2
 uvicorn[standard]==0.31.1
+jinja2==3.1.5
+python-multipart==0.0.22
+aiofiles==24.1.0
+
+# SSH / encryption (camera watchdog + encrypted settings)
+paramiko==3.5.0
+cryptography==46.0.5
 
 # Utilities
 tqdm==4.66.5

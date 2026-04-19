@@ -46,7 +46,7 @@ services:
         max-file: "5"
 
   # -------------------------------------------------------------------------
-  # API server – exposes REST endpoints for on-demand analysis.
+  # API + Web UI server – JSON endpoints and the browser-based dashboard.
   # -------------------------------------------------------------------------
   api:
     image: allskyanalyzer:latest
@@ -67,8 +67,11 @@ services:
     volumes:
       - /var/lib/indi-allsky:/var/lib/indi-allsky:ro
       - allsky_output:/data/output
+      # Persistent encrypted settings (SSH credentials + Fernet key).
+      - allsky_settings:/data/settings
       - ./config/config.yaml:/app/config/config.yaml:ro
     ports:
+      # Web UI + JSON API on port 8000.
       - "8000:8000"
     logging:
       driver: "json-file"
@@ -83,3 +86,9 @@ volumes:
       type: none
       o: bind
       device: /data/allsky_output
+  allsky_settings:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/allsky_settings
