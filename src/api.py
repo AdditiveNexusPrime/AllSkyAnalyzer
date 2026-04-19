@@ -83,23 +83,29 @@ def create_app(config: Config) -> FastAPI:
 
     @app.get("/overlay/{filename}")
     def get_overlay(filename: str) -> FileResponse:
-        """Return a previously generated overlay image by filename."""
+        """Return a previously generated overlay image by filename.
+
+        The response path is always taken from a directory listing of the
+        output directory, never constructed from user-supplied data, which
+        prevents path-traversal attacks.
+        """
+        import re
+
         out_dir = Path(config.output.directory).resolve()
 
-        # Sanitise: accept only a bare filename (no directory separators or
-        # relative components) to prevent path-traversal attacks.
-        safe_name = Path(filename).name
-        if not safe_name or safe_name != filename:
+        # Allowlist: only plain filenames (letters, digits, dash, underscore,
+        # dot) are accepted – no path separators or relative components.
+        if not re.fullmatch(r"[\w.\-]+", filename):
             raise HTTPException(status_code=400, detail="Invalid filename.")
 
-        overlay_path = (out_dir / safe_name).resolve()
+        # Iterate the output directory and return the first entry whose name
+        # exactly matches the requested filename.  The path is derived from
+        # the directory listing, not from the user-supplied value.
+        if out_dir.is_dir():
+            for candidate in out_dir.iterdir():
+                if candidate.name == filename and candidate.is_file():
+                    return FileResponse(str(candidate))
 
-        # Double-check that the resolved path is still inside out_dir.
-        if not str(overlay_path).startswith(str(out_dir) + "/") and overlay_path != out_dir:
-            raise HTTPException(status_code=400, detail="Invalid filename.")
-
-        if not overlay_path.exists():
-            raise HTTPException(status_code=404, detail="Overlay not found.")
-        return FileResponse(str(overlay_path))
+        raise HTTPException(status_code=404, detail="Overlay not found.")
 
     return app
