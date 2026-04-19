@@ -4,14 +4,14 @@ astroquery==0.4.7
 
 # Image processing
 opencv-python-headless==4.10.0.84
-Pillow==10.4.0
+Pillow==12.2.0
 numpy==1.26.4
 scipy==1.13.1
 scikit-image==0.24.0
 
 # GPU-accelerated machine learning (PyTorch with CUDA 12.1 support)
-torch==2.4.1
-torchvision==0.19.1
+torch==2.6.0
+torchvision==0.21.0
 
 # Visualization / overlay
 matplotlib==3.9.2

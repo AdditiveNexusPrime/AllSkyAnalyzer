@@ -64,7 +64,7 @@ COPY requirements.txt .
 # Install PyTorch with CUDA 12.1 wheels, then the rest of the requirements.
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir \
-        torch==2.4.1 torchvision==0.19.1 \
+        torch==2.6.0 torchvision==0.21.0 \
         --index-url https://download.pytorch.org/whl/cu121 \
     && pip install --no-cache-dir -r requirements.txt
 
