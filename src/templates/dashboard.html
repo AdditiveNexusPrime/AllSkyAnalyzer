@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% set watchdog_healthy = watchdog.is_healthy %}
+
+{% block title %}Dashboard – AllSkyAnalyzer{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-blue-300">Dashboard</h1>
+  <p class="text-gray-400 text-sm mt-1">Most-recent allsky overlay images and detection results.</p>
+</div>
+
+<!-- Camera status strip -->
+<div class="mb-6 p-4 rounded-lg border
+  {% if watchdog.is_healthy %}border-green-700 bg-green-950{% else %}border-red-700 bg-red-950{% endif %}
+  flex items-center gap-4">
+  <span class="text-2xl">{% if watchdog.is_healthy %}🟢{% else %}🔴{% endif %}</span>
+  <div>
+    <p class="font-semibold {% if watchdog.is_healthy %}text-green-300{% else %}text-red-300{% endif %}">
+      Camera {% if watchdog.is_healthy %}Healthy{% else %}NOT RESPONDING{% endif %}
+    </p>
+    <p class="text-xs text-gray-400">
+      Last check: {{ watchdog.last_check or 'never' }}
+      &nbsp;|&nbsp;
+      Last image: {{ watchdog.last_image or 'unknown' }}
+      {% if watchdog.last_restart %}
+        &nbsp;|&nbsp; Last restart: {{ watchdog.last_restart }}
+      {% endif %}
+    </p>
+  </div>
+  <a href="/watchdog" class="ml-auto text-xs text-blue-400 hover:underline">View watchdog →</a>
+</div>
+
+<!-- Image grid -->
+{% if overlays %}
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+  {% for item in overlays %}
+  <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-blue-600 transition group">
+    <a href="/overlay/{{ item.filename }}" target="_blank">
+      <img src="/overlay/{{ item.filename }}"
+           alt="{{ item.filename }}"
+           class="w-full object-cover aspect-square bg-black group-hover:opacity-90 transition" />
+    </a>
+    <div class="p-2 text-xs text-gray-400">
+      <p class="truncate text-gray-300 font-medium">{{ item.filename }}</p>
+      <p>{{ item.mtime }}</p>
+      {% if item.star_count is defined %}
+      <p class="mt-1">
+        ⭐ {{ item.star_count }} stars
+        {% if item.anomaly_count %}
+        &nbsp;🔴 {{ item.anomaly_count }} anomal{{ 'y' if item.anomaly_count == 1 else 'ies' }}
+        {% endif %}
+        {% if item.plate_solved %}
+        &nbsp;✅ plate-solved
+        {% endif %}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-20 text-gray-500">
+  <p class="text-4xl mb-4">🔭</p>
+  <p class="text-lg">No overlay images found yet.</p>
+  <p class="text-sm mt-2">
+    Make sure the allsky image directory is configured correctly in
+    <a href="/settings" class="text-blue-400 hover:underline">Settings</a>
+    and that the watcher is running.
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}

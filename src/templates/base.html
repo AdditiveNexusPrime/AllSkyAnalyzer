@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AllSkyAnalyzer{% endblock %}</title>
+  <!-- Tailwind CSS CDN (production should inline/bundle instead) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { sky: { 950: '#0b1220' } } } }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body class="h-full bg-gray-950 text-gray-100 font-sans">
+
+  <!-- Navigation bar -->
+  <nav class="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-6">
+    <a href="/" class="flex items-center gap-2 font-semibold text-lg text-blue-400 hover:text-blue-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 3v1m0 16v1m8.485-9H21M3 12H2.515M17.657 6.343l-.707.707M7.05 17.657l-.707-.707
+                 M17.657 17.657l-.707-.707M7.05 6.343l-.707.707" />
+      </svg>
+      AllSkyAnalyzer
+    </a>
+
+    <div class="flex gap-4 ml-4 text-sm">
+      <a href="/"
+         class="px-3 py-1 rounded {% if request.url.path == '/' %}bg-blue-700 text-white{% else %}text-gray-300 hover:text-white{% endif %}">
+        Dashboard
+      </a>
+      <a href="/watchdog"
+         class="px-3 py-1 rounded {% if request.url.path == '/watchdog' %}bg-blue-700 text-white{% else %}text-gray-300 hover:text-white{% endif %}">
+        Watchdog
+      </a>
+      <a href="/settings"
+         class="px-3 py-1 rounded {% if request.url.path == '/settings' %}bg-blue-700 text-white{% else %}text-gray-300 hover:text-white{% endif %}">
+        Settings
+      </a>
+    </div>
+
+    <!-- Watchdog health pill (right side) -->
+    <div class="ml-auto flex items-center gap-2 text-xs">
+      <span class="inline-block w-2 h-2 rounded-full
+        {% if watchdog_healthy %}bg-green-400{% else %}bg-red-500{% endif %}
+        animate-pulse"></span>
+      <span class="text-gray-400">Camera
+        {% if watchdog_healthy %}healthy{% else %}STALE{% endif %}
+      </span>
+    </div>
+  </nav>
+
+  <!-- Page content -->
+  <main class="p-6 max-w-7xl mx-auto">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center text-xs text-gray-600 pb-4">
+    AllSkyAnalyzer &mdash; indi-allsky night sky analysis
+  </footer>
+
+</body>
+</html>

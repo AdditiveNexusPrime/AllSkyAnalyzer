@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% set watchdog_healthy = status.is_healthy %}
+
+{% block title %}Watchdog – AllSkyAnalyzer{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-blue-300">Camera Watchdog</h1>
+  <p class="text-gray-400 text-sm mt-1">
+    Monitors the indi-allsky camera and automatically restarts it via SSH when it stops producing images.
+  </p>
+</div>
+
+<!-- Status card -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+  <div class="bg-gray-900 rounded-lg border
+    {% if status.is_healthy %}border-green-700{% else %}border-red-700{% endif %}
+    p-5">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="text-3xl">{% if status.is_healthy %}🟢{% else %}🔴{% endif %}</span>
+      <div>
+        <p class="font-bold text-lg {% if status.is_healthy %}text-green-300{% else %}text-red-300{% endif %}">
+          Camera {% if status.is_healthy %}Healthy{% else %}NOT RESPONDING{% endif %}
+        </p>
+        <p class="text-xs text-gray-500">Watchdog is {{ 'running' if status.running else 'STOPPED' }}</p>
+      </div>
+    </div>
+
+    <dl class="text-sm space-y-2">
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Last check</dt>
+        <dd class="text-gray-200">{{ status.last_check or '—' }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Newest image seen</dt>
+        <dd class="text-gray-200">{{ status.last_image or '—' }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Consecutive failures</dt>
+        <dd class="{% if status.consecutive_failures > 0 %}text-red-400{% else %}text-gray-200{% endif %}">
+          {{ status.consecutive_failures }}
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Config card -->
+  <div class="bg-gray-900 rounded-lg border border-gray-800 p-5">
+    <p class="font-semibold text-gray-300 mb-4">Watchdog configuration</p>
+    <dl class="text-sm space-y-2">
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Check interval</dt>
+        <dd class="text-gray-200">{{ config.check_interval_seconds }}s</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Stale threshold</dt>
+        <dd class="text-gray-200">{{ config.stale_threshold_seconds }}s</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-gray-400">Service name</dt>
+        <dd class="text-gray-200 font-mono text-xs">{{ config.service_name }}</dd>
+      </div>
+    </dl>
+    <p class="mt-4 text-xs text-gray-500">
+      Adjust check interval and stale threshold in
+      <a href="/settings" class="text-blue-400 hover:underline">Settings</a>.
+    </p>
+  </div>
+</div>
+
+<!-- Last restart result -->
+{% if status.last_restart %}
+<div class="bg-gray-900 rounded-lg border border-gray-800 p-5 mb-6">
+  <p class="font-semibold text-gray-300 mb-2">Last restart attempt</p>
+  <p class="text-xs text-gray-400 mb-1">{{ status.last_restart }}</p>
+  <pre class="text-xs rounded bg-gray-800 p-3 overflow-x-auto
+    {% if 'OK' in status.last_restart_result %}text-green-400{% else %}text-red-400{% endif %}">{{ status.last_restart_result }}</pre>
+</div>
+{% endif %}
+
+<!-- Info box -->
+<div class="bg-gray-900 rounded-lg border border-gray-800 p-5 text-sm text-gray-400">
+  <p class="font-semibold text-gray-300 mb-2">How it works</p>
+  <ol class="list-decimal list-inside space-y-1">
+    <li>Every <strong class="text-gray-200">{{ config.check_interval_seconds }}s</strong> the watchdog scans the allsky image directory.</li>
+    <li>If no image is newer than <strong class="text-gray-200">{{ config.stale_threshold_seconds }}s</strong>, the camera is declared stale.</li>
+    <li>The watchdog SSHs to the configured host and runs
+        <code class="bg-gray-800 px-1 rounded text-xs">sudo systemctl restart {{ config.service_name }}</code>.</li>
+    <li>SSH credentials are stored encrypted. Configure them in
+        <a href="/settings" class="text-blue-400 hover:underline">Settings</a>.</li>
+  </ol>
+</div>
+
+{% endblock %}
