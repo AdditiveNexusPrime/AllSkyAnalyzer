@@ -2,10 +2,10 @@
 SettingsStore – encrypted persistence for sensitive run-time settings.
 
 Sensitive values (SSH username, password) are encrypted at rest using
-Fernet symmetric encryption (AES-128-CBC with PKCS7 padding + HMAC-SHA256).
-The encryption key is auto-generated on first use and stored in
-``<data_dir>/secret.key``.  Settings are stored as a JSON file at
-``<data_dir>/settings.json``.
+Fernet symmetric encryption (AES-CBC + HMAC-SHA256 per the Fernet
+specification).  The encryption key is auto-generated on first use and
+stored in ``<data_dir>/secret.key``.  Settings are stored as a JSON file
+at ``<data_dir>/settings.json``.
 
 Non-sensitive settings (allsky image directory, SSH hostname) are stored
 as plain text in the same JSON file for readability.

@@ -41,7 +41,8 @@
     <h2 class="text-lg font-semibold text-gray-200 mb-1">indi-allsky SSH Credentials</h2>
     <p class="text-xs text-gray-500 mb-4">
       Used by the camera watchdog to restart indi-allsky when the camera stops responding.
-      The password is stored <strong class="text-gray-400">encrypted at rest</strong> (AES-128 via Fernet).
+      The password is stored <strong class="text-gray-400">encrypted at rest</strong>
+      (AES-CBC + HMAC-SHA256 via the Fernet specification).
     </p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
