@@ -84,8 +84,20 @@ def create_app(config: Config) -> FastAPI:
     @app.get("/overlay/{filename}")
     def get_overlay(filename: str) -> FileResponse:
         """Return a previously generated overlay image by filename."""
-        out_dir = Path(config.output.directory)
-        overlay_path = out_dir / filename
+        out_dir = Path(config.output.directory).resolve()
+
+        # Sanitise: accept only a bare filename (no directory separators or
+        # relative components) to prevent path-traversal attacks.
+        safe_name = Path(filename).name
+        if not safe_name or safe_name != filename:
+            raise HTTPException(status_code=400, detail="Invalid filename.")
+
+        overlay_path = (out_dir / safe_name).resolve()
+
+        # Double-check that the resolved path is still inside out_dir.
+        if not str(overlay_path).startswith(str(out_dir) + "/") and overlay_path != out_dir:
+            raise HTTPException(status_code=400, detail="Invalid filename.")
+
         if not overlay_path.exists():
             raise HTTPException(status_code=404, detail="Overlay not found.")
         return FileResponse(str(overlay_path))
