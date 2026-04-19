@@ -206,6 +206,11 @@ class CameraWatchdog:
         """
         Open an SSH connection and restart the indi-allsky systemd service.
 
+        The SSH client loads the user's known_hosts file (``~/.ssh/known_hosts``)
+        and rejects connections to unknown hosts.  If the target host is not yet
+        in known_hosts, run ``ssh-keyscan <host> >> ~/.ssh/known_hosts`` on the
+        AllSkyAnalyzer server before the watchdog will be able to connect.
+
         Returns a human-readable result string.
         """
         try:
@@ -214,7 +219,15 @@ class CameraWatchdog:
             return "ERROR: paramiko not installed – cannot perform SSH restart."
 
         client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # noqa: S507
+        # Load the system-wide and per-user known_hosts files so that only
+        # previously verified host keys are accepted (prevents MITM attacks).
+        client.load_system_host_keys()
+        try:
+            client.load_host_keys(str(Path.home() / ".ssh" / "known_hosts"))
+        except (OSError, IOError):
+            pass  # File may not exist yet; system keys are still loaded.
+        # Reject connections to hosts whose key is not in known_hosts.
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
         try:
             connect_kwargs: dict = {
@@ -238,6 +251,14 @@ class CameraWatchdog:
             else:
                 return f"ERROR (exit {exit_status}): {err_output or 'no stderr'}"
 
+        except paramiko.ssh_exception.NoValidConnectionsError as exc:
+            return f"ERROR: Cannot connect to {ssh.host}:{ssh.port} – {exc}"
+        except paramiko.ssh_exception.SSHException as exc:
+            # Catches unknown-host-key rejection with a helpful hint.
+            return (
+                f"ERROR: SSH key error – {exc}. "
+                f"Run: ssh-keyscan {ssh.host} >> ~/.ssh/known_hosts"
+            )
         except Exception as exc:
             return f"ERROR: {exc}"
         finally:
