@@ -1,0 +1,56 @@
+# AllSkyAnalyzer configuration
+# Copy this file and adjust paths / settings for your installation.
+
+indi_allsky:
+  # Directory where indi-allsky writes captured images.
+  image_dir: /var/lib/indi-allsky/images
+  # SQLite database used by indi-allsky (not yet consumed – reserved for future use).
+  db_path: /var/lib/indi-allsky/indi-allsky.db
+  # Glob pattern to discover images under image_dir.
+  file_pattern: "**/*.jpg"
+  # Only process images younger than this many seconds.  0 = no limit.
+  max_age_seconds: 0
+
+astrometry:
+  # Path to a local astrometry.net index directory.
+  # Leave empty to fall back to photometric-only detection.
+  index_dir: /usr/share/astrometry
+  # Online API key for astrometry.net (only used when index_dir is absent).
+  api_key: ""
+  # Downsampling factor applied before plate solving.
+  downsample: 2
+  # Field-of-view hint in degrees (0 = auto).
+  fov_deg: 0.0
+  # Catalogue stars fainter than this magnitude are not drawn.
+  magnitude_limit: 6.0
+
+anomaly:
+  # Pixels must be this many standard deviations brighter than the background.
+  z_score_threshold: 5.0
+  # Minimum contiguous bright area (px²) to report as an anomaly.
+  min_area_px: 10
+  # Maximum contiguous bright area (px²) – avoids flagging clouds / the moon.
+  max_area_px: 5000
+  # Use CUDA acceleration when available (NVIDIA GPU required).
+  use_cuda: true
+  # CUDA device index (0-based).
+  cuda_device: 0
+
+overlay:
+  # Colours: [R, G, B, A]  (alpha: 0 = transparent, 255 = opaque)
+  star_colour: [255, 255, 0, 200]
+  constellation_colour: [0, 200, 255, 160]
+  anomaly_colour: [255, 50, 50, 220]
+  star_radius_px: 6
+  font_scale: 0.45
+  show_star_names: true
+  show_constellation_names: true
+  jpeg_quality: 92
+
+output:
+  # Directory where overlay images and JSON sidecars are written.
+  directory: /data/output
+  save_overlay: true
+  save_json: true
+  save_db: false
+  db_path: /data/output/results.db

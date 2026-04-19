@@ -1,0 +1,1 @@
+"""AllSkyAnalyzer test package."""

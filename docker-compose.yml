@@ -1,0 +1,85 @@
+# AllSkyAnalyzer – Docker Compose file
+#
+# Prerequisites:
+#   - NVIDIA Container Toolkit installed on the host
+#     (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+#   - Docker Compose v2
+#
+# Usage:
+#   docker compose up -d          # start watcher + API server
+#   docker compose logs -f        # tail logs
+#   docker compose down           # stop everything
+
+services:
+  # -------------------------------------------------------------------------
+  # Watcher – continuously monitors the indi-allsky image directory and
+  # analyses each new image as it arrives.
+  # -------------------------------------------------------------------------
+  watcher:
+    build: .
+    image: allskyanalyzer:latest
+    container_name: allsky_watcher
+    command: watch
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all          # use all available GPUs (both 2060s)
+              capabilities: [gpu]
+    environment:
+      - ALLSKY_CONFIG=/app/config/config.yaml
+      # Override individual settings via environment variables if desired.
+      # - CUDA_VISIBLE_DEVICES=0,1
+    volumes:
+      # Mount the indi-allsky data directory read-only.
+      - /var/lib/indi-allsky:/var/lib/indi-allsky:ro
+      # Persist output (overlays, JSON, database) on the host.
+      - allsky_output:/data/output
+      # Optional: mount a custom config file.
+      - ./config/config.yaml:/app/config/config.yaml:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # -------------------------------------------------------------------------
+  # API server – exposes REST endpoints for on-demand analysis.
+  # -------------------------------------------------------------------------
+  api:
+    image: allskyanalyzer:latest
+    container_name: allsky_api
+    command: serve --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+    depends_on:
+      - watcher
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - ALLSKY_CONFIG=/app/config/config.yaml
+    volumes:
+      - /var/lib/indi-allsky:/var/lib/indi-allsky:ro
+      - allsky_output:/data/output
+      - ./config/config.yaml:/app/config/config.yaml:ro
+    ports:
+      - "8000:8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+volumes:
+  allsky_output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/allsky_output
